@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Téléchargement de photo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e0e; --surface: #161616; --border: #2a2a2a;
+    --border-hover: #3f3f3f; --text: #f0ede8; --muted: #6b6b6b;
+    --accent: #d4f060; --accent-dark: #b8d440; --danger: #ff5c5c;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-weight: 300;
+    min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 2rem;
+  }
+  .panel { width: 100%; max-width: 480px; }
+  .header { margin-bottom: 2.5rem; }
+  .label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+  .drop-zone {
+    border: 1px dashed var(--border-hover); border-radius: 12px;
+    padding: 3rem 2rem; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s; background: var(--surface);
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(212,240,96,0.04); }
+  .drop-icon { width: 40px; height: 40px; border: 1px solid var(--border-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+  .drop-icon svg { width: 18px; height: 18px; stroke: var(--muted); }
+  .drop-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .drop-text span { color: var(--accent); }
+  .preview-section { display: none; margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .preview-img-wrap { aspect-ratio: 1/1; overflow: hidden; background: #111; border-radius: 12px 12px 0 0; }
+  .preview-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .preview-info { padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+  .file-name { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .btn-remover { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 14px; border-radius: 6px; border: none; background: transparent; color: var(--danger); cursor: pointer; transition: background 0.15s; flex-shrink: 0; }
+  .btn-remover:hover { background: rgba(255,92,92,0.1); }
+  .btn-alterar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; background: var(--accent); color: #0e0e0e; border: none; border-top: 1px solid rgba(0,0,0,0.15); border-radius: 0 0 12px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+  .btn-alterar:hover { background: var(--accent-dark); }
+  .btn-alterar:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-alterar svg { width: 15px; height: 15px; stroke: #0e0e0e; flex-shrink: 0; }
+  .status-bar { margin-top: 1rem; height: 28px; display: flex; align-items: center; }
+  .status-pill { font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 12px; border-radius: 20px; background: rgba(212,240,96,0.12); color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .status-pill.visible { opacity: 1; }
+  .status-pill.error { background: rgba(255,92,92,0.12); color: var(--danger); }
+  .footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .footer-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .footer-hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .footer-hint code { font-family: 'DM Mono', monospace; font-size: 11px; background: #1e1e1e; padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .server-input-wrap { margin-bottom: 1.5rem; }
+  .server-input-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .server-input { width: 100%; background: var(--surface); border: 1px solid var(--border-hover); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; transition: border-color 0.2s; }
+  .server-input:focus { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="header">
+    <p class="label">Panneau de contrôle</p>
+    <h1>Téléchargement de photo</h1>
+  </div>
+
+  <div class="server-input-wrap">
+    <p class="server-input-label">URL du serveur Node-RED</p>
+    <input class="server-input" type="text" id="serverUrl" placeholder="http://localhost:1880" value="http://localhost:1880">
+  </div>
+
+  <input type="file" accept="image/*" id="fileInput" style="display:none">
+
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12V4M8 8l4-4 4 4"/>
+      </svg>
+    </div>
+    <p class="drop-text">
+      <span>Appuie pour choisir</span> ou fais glisser ici<br>
+      JPG, PNG, WebP, GIF
+    </p>
+  </div>
+
+  <div class="preview-section" id="previewSection">
+    <div class="preview-img-wrap">
+      <img id="previewImg" src="" alt="">
+    </div>
+    <div class="preview-info">
+      <span class="file-name" id="fileName">—</span>
+      <button class="btn-remover" id="btnRemover" onclick="removePhoto()">Supprimer</button>
+    </div>
+    <button class="btn-alterar" id="btnAlterar" onclick="document.getElementById('fileInput').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+      </svg>
+      Modifier la photo
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-pill" id="statusPill"></span>
+  </div>
+
+  <div class="footer">
+    <p class="footer-label"><span class="dot"></span>Affichage en direct</p>
+    <p class="footer-hint">
+      La photo apparaît dans <code>/page3</code> sur Node-RED,<br>
+      sous "Activités Scolaires", actualisée toutes les 2s.
+    </p>
+  </div>
+</div>
+
+<script>
+  function getServer() {
+    return (document.getElementById('serverUrl').value || 'http://localhost:1880').replace(/\/$/, '');
+  }
+
+  function showStatus(msg, isError) {
+    const el = document.getElementById('statusPill');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('visible');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('visible'), 3000);
+  }
+
+  function setLoading(loading) {
+    const btn = document.getElementById('btnAlterar');
+    const rem = document.getElementById('btnRemover');
+    btn.disabled = loading;
+    rem.disabled = loading;
+    btn.textContent = loading ? 'Envoi...' : '';
+    if (!loading) {
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;stroke:#0e0e0e;flex-shrink:0;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Modifier la photo`;
+    }
+  }
+
+  function renderPreview(dataUrl, name) {
+    document.getElementById('previewImg').src = dataUrl;
+    document.getElementById('fileName').textContent = name;
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('dropZone').style.display = 'none';
+  }
+
+  function showDrop() {
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('dropZone').style.display = '';
+  }
+
+  async function savePhoto(file) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target.result;
+      const payload = { dataUrl, name: file.name, ts: Date.now() };
+      setLoading(true);
+      try {
+        const res = await fetch(getServer() + '/api/foto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        renderPreview(dataUrl, file.name);
+        showStatus('Photo envoyée vers Node-RED');
+      } catch (err) {
+        showStatus('Erreur : ' + err.message, true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function removePhoto() {
+    setLoading(true);
+    try {
+      await fetch(getServer() + '/api/foto', { method: 'DELETE' });
+      showDrop();
+      showStatus('Photo supprimée');
+    } catch (err) {
+      showStatus('Erreur : ' + err.message, true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    if (e.target.files[0]) savePhoto(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('click', () => document.getElementById('fileInput').click());
+  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) savePhoto(f);
+  });
+
+  async function checkExisting() {
+    try {
+      const res = await fetch(getServer() + '/api/foto');
+      const data = await res.json();
+      if (data && data.dataUrl) renderPreview(data.dataUrl, data.name || 'photo');
+    } catch {}
+  }
+  checkExisting();
+</script>
+</body>
+</html>
