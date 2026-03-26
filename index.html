@@ -114,8 +114,14 @@
     </p>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <script>
+
+  const supabase = window.supabase.createClient(
+  "https://mocgkcxhxmenaxalcrth.supabase.co",
+  "SUsb_publishable_ONwV_2iY9bNJefEBeKn7wg_06UUzKu3"
+);
   function getServer() {
     return (document.getElementById('serverUrl').value || 'http://localhost:1880').replace(/\/$/, '');
   }
@@ -152,29 +158,47 @@
     document.getElementById('dropZone').style.display = '';
   }
 
-  async function savePhoto(file) {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result;
-      const payload = { dataUrl, name: file.name, ts: Date.now() };
-      setLoading(true);
-      try {
-        const res = await fetch(getServer() + '/api/foto', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        renderPreview(dataUrl, file.name);
-        showStatus('Photo envoyée vers Node-RED');
-      } catch (err) {
-        showStatus('Erreur : ' + err.message, true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+ async function savePhoto(file) {
+  setLoading(true);
+
+  try {
+    const fileName = Date.now() + "-" + file.name;
+
+    // upload
+    const { data, error } = await supabase.storage
+      .from("photos")
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    // pegar URL pública
+    const { data: urlData } = supabase.storage
+      .from("photos")
+      .getPublicUrl(fileName);
+
+    const publicUrl = urlData.publicUrl;
+
+    // enviar URL para Node-RED
+    await fetch(getServer() + "/api/foto", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        url: publicUrl,
+        ts: Date.now()
+      })
+    });
+
+    renderPreview(publicUrl, file.name);
+    showStatus("Upload via Supabase OK 🚀");
+
+  } catch (err) {
+    showStatus("Erro: " + err.message, true);
+  } finally {
+    setLoading(false);
   }
+}
 
   async function removePhoto() {
     setLoading(true);
