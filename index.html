@@ -114,16 +114,19 @@
     </p>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+  // ✅ SUPABASE CERTO
+  const { createClient } = supabase;
 
-  const supabase = window.supabase.createClient(
-  "https://mocgkcxhxmenaxalcrth.supabase.co",
-  "SUsb_publishable_ONwV_2iY9bNJefEBeKn7wg_06UUzKu3"
-);
+  const supabaseClient = createClient(
+    "https://mocgkcxhxmenaxalcrth.supabase.co",
+    "sb_publishable_ONwV_2iY9bNJefEBeKn7wg_06UUzKu3"
+  );
+
   function getServer() {
-    return (document.getElementById('serverUrl').value || 'http://localhost:1880').replace(/\/$/, '');
+    return (document.getElementById('serverUrl').value || '').replace(/\/$/, '');
   }
 
   function showStatus(msg, isError) {
@@ -131,23 +134,25 @@
     el.textContent = msg;
     el.classList.toggle('error', !!isError);
     el.classList.add('visible');
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('visible'), 3000);
+    setTimeout(() => el.classList.remove('visible'), 3000);
   }
 
   function setLoading(loading) {
     const btn = document.getElementById('btnAlterar');
     const rem = document.getElementById('btnRemover');
+
     btn.disabled = loading;
     rem.disabled = loading;
-    btn.textContent = loading ? 'Envoi...' : '';
-    if (!loading) {
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;stroke:#0e0e0e;flex-shrink:0;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Modifier la photo`;
-    }
+
+    btn.innerHTML = loading
+      ? "Envoi..."
+      : `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg> Modifier la photo`;
   }
 
-  function renderPreview(dataUrl, name) {
-    document.getElementById('previewImg').src = dataUrl;
+  function renderPreview(url, name) {
+    document.getElementById('previewImg').src = url;
     document.getElementById('fileName').textContent = name;
     document.getElementById('previewSection').style.display = 'block';
     document.getElementById('dropZone').style.display = 'none';
@@ -158,47 +163,46 @@
     document.getElementById('dropZone').style.display = '';
   }
 
- async function savePhoto(file) {
-  setLoading(true);
+  // 🚀 UPLOAD
+  async function savePhoto(file) {
+    setLoading(true);
 
-  try {
-    const fileName = Date.now() + "-" + file.name;
+    try {
+      const fileName = Date.now() + "-" + file.name;
 
-    // upload
-    const { data, error } = await supabase.storage
-      .from("photos")
-      .upload(fileName, file);
+      const { error } = await supabaseClient.storage
+        .from("photos")
+        .upload(fileName, file);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // pegar URL pública
-    const { data: urlData } = supabase.storage
-      .from("photos")
-      .getPublicUrl(fileName);
+      const { data } = supabaseClient.storage
+        .from("photos")
+        .getPublicUrl(fileName);
 
-    const publicUrl = urlData.publicUrl;
+      const publicUrl = data.publicUrl;
 
-    // enviar URL para Node-RED
-    await fetch(getServer() + "/api/foto", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        url: publicUrl,
-        ts: Date.now()
-      })
-    });
+      // envia para Node-RED
+      await fetch(getServer() + "/api/foto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          url: publicUrl,
+          ts: Date.now()
+        })
+      });
 
-    renderPreview(publicUrl, file.name);
-    showStatus("Upload via Supabase OK 🚀");
+      renderPreview(publicUrl, file.name);
+      showStatus("Upload OK 🚀");
 
-  } catch (err) {
-    showStatus("Erro: " + err.message, true);
-  } finally {
-    setLoading(false);
+    } catch (err) {
+      showStatus("Erro: " + err.message, true);
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   async function removePhoto() {
     setLoading(true);
@@ -213,28 +217,46 @@
     }
   }
 
+  // INPUT
   document.getElementById('fileInput').addEventListener('change', (e) => {
     if (e.target.files[0]) savePhoto(e.target.files[0]);
     e.target.value = '';
   });
 
   const dz = document.getElementById('dropZone');
-  dz.addEventListener('click', () => document.getElementById('fileInput').click());
-  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+
+  dz.addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+
+  dz.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dz.classList.add('dragover');
+  });
+
+  dz.addEventListener('dragleave', () => {
+    dz.classList.remove('dragover');
+  });
+
   dz.addEventListener('drop', (e) => {
-    e.preventDefault(); dz.classList.remove('dragover');
+    e.preventDefault();
+    dz.classList.remove('dragover');
     const f = e.dataTransfer.files[0];
     if (f && f.type.startsWith('image/')) savePhoto(f);
   });
 
+  // 🔥 CORRIGIDO (ANTES ERA dataUrl)
   async function checkExisting() {
     try {
       const res = await fetch(getServer() + '/api/foto');
       const data = await res.json();
-      if (data && data.dataUrl) renderPreview(data.dataUrl, data.name || 'photo');
+
+      if (data && data.url) {
+        renderPreview(data.url, "photo");
+      }
     } catch {}
   }
+
   checkExisting();
 </script>
 </body>
