@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upload Photo — ARF</title>
+<title>Téléchargement de photo</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,108 +12,40 @@
     --border-hover: #3f3f3f; --text: #f0ede8; --muted: #6b6b6b;
     --accent: #d4f060; --accent-dark: #b8d440; --danger: #ff5c5c;
   }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: 'DM Sans', sans-serif; font-weight: 300;
-    min-height: 100vh; display: flex; align-items: center;
-    justify-content: center; padding: 2rem;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
   .panel { width: 100%; max-width: 480px; }
-  .header { margin-bottom: 2rem; }
+  .header { margin-bottom: 2.5rem; }
   .label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
   h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
-
-  .server-wrap { margin-bottom: 1.5rem; }
-  .server-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
-  .server-input {
-    width: 100%; background: var(--surface); border: 1px solid var(--border-hover);
-    border-radius: 8px; padding: 10px 14px; color: var(--text);
-    font-family: 'DM Mono', monospace; font-size: 12px; outline: none;
-    transition: border-color 0.2s;
-  }
-  .server-input:focus { border-color: var(--accent); }
-  .server-hint { font-size: 11px; color: var(--muted); margin-top: 5px; font-family: 'DM Mono', monospace; }
-
-  .drop-zone {
-    border: 1px dashed var(--border-hover); border-radius: 12px;
-    padding: 3rem 2rem; text-align: center; cursor: pointer;
-    transition: border-color 0.2s, background 0.2s; background: var(--surface);
-  }
+  .drop-zone { border: 1px dashed var(--border-hover); border-radius: 12px; padding: 3rem 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--surface); }
   .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(212,240,96,0.04); }
-  .drop-icon {
-    width: 40px; height: 40px; border: 1px solid var(--border-hover);
-    border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; margin: 0 auto 1rem;
-  }
+  .drop-icon { width: 40px; height: 40px; border: 1px solid var(--border-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
   .drop-icon svg { width: 18px; height: 18px; stroke: var(--muted); }
   .drop-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
   .drop-text span { color: var(--accent); }
-
-  .preview-section {
-    display: none; margin-top: 1.5rem; border: 1px solid var(--border);
-    border-radius: 12px; background: var(--surface);
-  }
+  .preview-section { display: none; margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
   .preview-img-wrap { aspect-ratio: 1/1; overflow: hidden; background: #111; border-radius: 12px 12px 0 0; }
   .preview-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .preview-info {
-    padding: 1rem 1.25rem; display: flex; align-items: center;
-    justify-content: space-between; border-top: 1px solid var(--border);
-  }
-  .file-name {
-    font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;
-  }
-  .btn-remover {
-    font-size: 12px; padding: 6px 14px; border-radius: 6px; border: none;
-    background: transparent; color: var(--danger); cursor: pointer;
-    transition: background 0.15s; flex-shrink: 0;
-  }
+  .preview-info { padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+  .file-name { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .btn-remover { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 14px; border-radius: 6px; border: none; background: transparent; color: var(--danger); cursor: pointer; transition: background 0.15s; flex-shrink: 0; }
   .btn-remover:hover { background: rgba(255,92,92,0.1); }
-  .btn-alterar {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; padding: 13px; background: var(--accent); color: #0e0e0e;
-    border: none; border-top: 1px solid rgba(0,0,0,0.15);
-    border-radius: 0 0 12px 12px; font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: background 0.15s;
-  }
+  .btn-alterar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; background: var(--accent); color: #0e0e0e; border: none; border-top: 1px solid rgba(0,0,0,0.15); border-radius: 0 0 12px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
   .btn-alterar:hover { background: var(--accent-dark); }
   .btn-alterar:disabled { opacity: 0.5; cursor: not-allowed; }
-
   .status-bar { margin-top: 1rem; height: 28px; display: flex; align-items: center; }
-  .status-pill {
-    font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 12px;
-    border-radius: 20px; background: rgba(212,240,96,0.12); color: var(--accent);
-    opacity: 0; transition: opacity 0.3s;
-  }
+  .status-pill { font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 12px; border-radius: 20px; background: rgba(212,240,96,0.12); color: var(--accent); opacity: 0; transition: opacity 0.3s; }
   .status-pill.visible { opacity: 1; }
   .status-pill.error { background: rgba(255,92,92,0.12); color: var(--danger); }
-
-  .footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
-  .footer-label {
-    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
-    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
-  }
-  .footer-hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
-  .footer-hint code {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    background: #1e1e1e; padding: 2px 6px; border-radius: 4px; color: var(--accent);
-  }
-  .dot {
-    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent); margin-right: 6px;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  .progress-bar {
-    height: 3px; background: var(--border); border-radius: 2px;
-    margin-top: 12px; overflow: hidden; display: none;
-  }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 12px; overflow: hidden; display: none; }
   .progress-bar.visible { display: block; }
-  .progress-fill {
-    height: 100%; background: var(--accent);
-    width: 0%; transition: width 0.3s ease; border-radius: 2px;
-  }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; border-radius: 2px; }
+  .footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .footer-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .footer-hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .footer-hint code { font-family: 'DM Mono', monospace; font-size: 11px; background: #1e1e1e; padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
@@ -121,15 +53,6 @@
   <div class="header">
     <p class="label">Panneau de contrôle</p>
     <h1>Téléchargement de photo</h1>
-  </div>
-
-  <!-- URL do Node-RED (configurável) -->
-  <div class="server-wrap">
-    <p class="server-label">URL du serveur Node-RED</p>
-    <input class="server-input" type="text" id="serverUrl"
-      placeholder="https://ton-nodered.example.com"
-      value="">
-    <p class="server-hint">Ex: http://192.168.1.10:1880 ou https://monserveur.com</p>
   </div>
 
   <input type="file" accept="image/*" id="fileInput" style="display:none">
@@ -170,30 +93,20 @@
   <div class="footer">
     <p class="footer-label"><span class="dot"></span>Affichage en direct</p>
     <p class="footer-hint">
-      La photo est envoyée vers <code>Supabase</code>,<br>
-      puis apparaît dans <code>/page3</code> sur Node-RED,<br>
-      actualisée automatiquement toutes les 2s.
+      La photo apparaît dans <code>/page3</code> sur Node-RED,<br>
+      sous "Activités Scolaires", actualisée toutes les 2s.
     </p>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ── Supabase config ──────────────────────────────────────────────
-  const SUPABASE_URL    = 'https://mocgkcxhxmenaxalcrth.supabase.co';
-  const SUPABASE_ANON   = 'sb_publishable_ONwV_2iY9bNJefEBeKn7wg_06UUzKu3';
-  const BUCKET          = 'photos';
+  const SUPABASE_URL  = 'https://mocgkcxhxmenaxalcrth.supabase.co';
+  const SUPABASE_ANON = 'sb_publishable_ONwV_2iY9bNJefEBeKn7wg_06UUzKu3';
+  const BUCKET        = 'photos';
 
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-
-  // ── Helpers ──────────────────────────────────────────────────────
-  function getServer() {
-    const v = (document.getElementById('serverUrl').value || '').trim().replace(/\/$/, '');
-    // Guarda no localStorage para persistir entre visitas
-    if (v) localStorage.setItem('nodered_url', v);
-    return v;
-  }
 
   function showStatus(msg, isError) {
     const el = document.getElementById('statusPill');
@@ -233,19 +146,11 @@
     document.getElementById('previewImg').src = '';
   }
 
-  // ── Upload ───────────────────────────────────────────────────────
   async function savePhoto(file) {
-    const server = getServer();
-    if (!server) {
-      showStatus('⚠ Configure l\'URL du serveur Node-RED', true);
-      return;
-    }
-
     setLoading(true);
     setProgress(10);
-
     try {
-      // 1. Upload vers Supabase Storage
+      // 1. Upload para o Supabase Storage
       const safeName = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       setProgress(30);
 
@@ -256,13 +161,13 @@
       if (upErr) throw new Error('Supabase: ' + upErr.message);
       setProgress(60);
 
-      // 2. Récupère l'URL publique
+      // 2. Obter URL pública
       const { data } = sb.storage.from(BUCKET).getPublicUrl(safeName);
       const publicUrl = data.publicUrl;
       setProgress(80);
 
-      // 3. Notifie Node-RED
-      const res = await fetch(server + '/api/foto', {
+      // 3. Notifica o Node-RED via URL relativa (funciona porque esta página é servida pelo Node-RED)
+      const res = await fetch('/api/foto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: publicUrl, name: file.name, ts: Date.now() })
@@ -272,8 +177,7 @@
       setProgress(100);
 
       renderPreview(publicUrl, file.name);
-      showStatus('✓ Photo envoyée vers Node-RED');
-
+      showStatus('✓ Photo envoyée');
     } catch (err) {
       showStatus('Erreur: ' + err.message, true);
     } finally {
@@ -282,14 +186,10 @@
     }
   }
 
-  // ── Supprimer ────────────────────────────────────────────────────
   async function removePhoto() {
-    const server = getServer();
-    if (!server) { showStatus('⚠ Configure l\'URL du serveur', true); return; }
-
     setLoading(true);
     try {
-      await fetch(server + '/api/foto', { method: 'DELETE' });
+      await fetch('/api/foto', { method: 'DELETE' });
       showDrop();
       showStatus('Photo supprimée');
     } catch (err) {
@@ -299,18 +199,6 @@
     }
   }
 
-  // ── Vérifier photo existante ─────────────────────────────────────
-  async function checkExisting() {
-    const server = getServer();
-    if (!server) return;
-    try {
-      const res = await fetch(server + '/api/foto');
-      const data = await res.json();
-      if (data && data.url) renderPreview(data.url, data.name || 'photo');
-    } catch {}
-  }
-
-  // ── Events ───────────────────────────────────────────────────────
   document.getElementById('fileInput').addEventListener('change', e => {
     if (e.target.files[0]) savePhoto(e.target.files[0]);
     e.target.value = '';
@@ -326,11 +214,14 @@
     if (f && f.type.startsWith('image/')) savePhoto(f);
   });
 
-  // Restaura URL salva
-  const saved = localStorage.getItem('nodered_url');
-  if (saved) document.getElementById('serverUrl').value = saved;
-
-  // Verifica se já há foto activa
+  // Verifica se já há foto activa ao carregar a página
+  async function checkExisting() {
+    try {
+      const res = await fetch('/api/foto');
+      const data = await res.json();
+      if (data && data.url) renderPreview(data.url, data.name || 'photo');
+    } catch {}
+  }
   checkExisting();
 </script>
 </body>
